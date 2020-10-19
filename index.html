@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font: 13px Helvetica, Arial;
+      }
+      form {
+        background: #000;
+        padding: 3px;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+      }
+      form input {
+        border: 0;
+        padding: 10px;
+        width: 90%;
+        margin-right: 0.5%;
+      }
+      form button {
+        width: 9%;
+        background: rgb(130, 224, 255);
+        border: none;
+        padding: 10px;
+      }
+      #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+      #messages li {
+        padding: 5px 10px;
+      }
+      #messages li:nth-child(odd) {
+        background: #eee;
+      }
+    </style>
+  </head>
+  <body>
+    <input
+      type="text"
+      name="username"
+      id="username"
+      placeholder="Enter Username"
+    />
+    <button type="button" id="lets_chat_button" onclick="roomHandler()">
+      Let's chat
+    </button>
+    <br />
+    <input
+      type="text"
+      name="room_name"
+      id="room_name"
+      placeholder="Join Existing room"
+    />
+    <button
+      type="button"
+      id="join_existing_room_button"
+      onclick="joinHandler()"
+    >
+      Start Chat
+    </button>
+    <h4 id="username_display"></h4>
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script>
+      const roomHandler = () => {
+        const username = document.getElementById("username");
+        const lets_chat_button = document.getElementById("lets_chat_button");
+        const username_display = document.getElementById("username_display");
+        username_display.innerText = username.value;
+
+        username.style.display = "none";
+        lets_chat_button.style.display = "none";
+
+        var socket = io("/", {
+          query: {
+            username: username.value,
+          },
+        });
+        $("form").submit(function (e) {
+          e.preventDefault(); // prevents page reloading
+          var messageObject = {};
+          messageObject.msg = $("#m").val();
+          messageObject.origin = username.value;
+          console.log(messageObject);
+          socket.emit("chat message", messageObject);
+          $("#m").val("");
+          return false;
+        });
+        socket.on("chat message", function (msg) {
+          $("#messages").append($("<li>").text(msg));
+        });
+      };
+
+      const joinHandler = () => {
+        const room_name = document.getElementById("room_name");
+        const join_existing_room_button = document.getElementById(
+          "join_existing_room_button"
+        );
+
+        var socket = io("/", {
+          query: {
+            target: room_name.value,
+          },
+        });
+
+        room_name.style.display = "none";
+        join_existing_room_button.style.display = "none";
+
+        $("form").submit(function (e) {
+          e.preventDefault(); // prevents page reloading
+          var messageObject = {};
+          messageObject.msg = $("#m").val();
+          messageObject.target = room_name.value;
+          console.log(messageObject);
+          socket.emit("chat message", messageObject);
+          $("#m").val("");
+          return false;
+        });
+        socket.on("chat message", function (msg) {
+          $("#messages").append($("<li>").text(msg));
+        });
+
+
+      };
+    </script>
+  </body>
+</html>
